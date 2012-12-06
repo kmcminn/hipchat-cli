@@ -1,20 +1,21 @@
-hipchat-cli
+hipmsg
 ===========
 
 Tweaks to hipchat-cli/hipchat_room_message. A simple api client in bash to push messages to a hipchat room.
 
 
-$ hipmsg -t <token> -r <131313> -f "Dog"
+    $ hipmsg -t <token> -r <131313> -f "Dog"
 -----
 Examples:
 
-    cat message.txt | hipmsg -t <token> -r 1234 -f "System"
-    hipmsg -t <token> -r 1234 -f "System" -m "restock the fridge"
-    HIPCHAT_API_TOKEN=<token> hipgmsg -r 1234 -f "Monitoring System" -m "this is broken"
-    hipmsg -t <token> -r 1234 -f 'foo' -l
+    $ cat message.txt | hipmsg -t <token> -r 1234 -f "System"
+    $ hipmsg -t <token> -r 1234 -f "System" -m "restock the fridge"
+    $ HIPCHAT_API_TOKEN=<token> hipgmsg -r 1234 -f "Monitoring System" -m "this is broken"
+    $ hipmsg -t <token> -r 1234 -f 'foo' -l
 
 
 Usage:
+
     Usage: ./hipmsg -t <token> -r <room id> -f <from name>
 
     This script will send a message to the given room as
