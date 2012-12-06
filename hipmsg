@@ -33,13 +33,14 @@ MESSAGE=
 NOTIFY=0
 HOST='api.hipchat.com'
 
-while getopts “ht:r:f:c:o:n” OPTION; do
+while getopts “ht:r:f:m:c:o:n” OPTION; do
     case $OPTION in
         h) usage; exit 1;;
         t) TOKEN=$OPTARG;;
         r) ROOM_ID=$OPTARG;;
         f) FROM=$OPTARG;;
         c) COLOR=$OPTARG;;
+        m) MESSAGE=$OPTARG;;
         n) NOTIFY=1;;
         o) HOST=$OPTARG;;
         [?]) usage; exit;;
@@ -48,21 +49,29 @@ done
 
 # check for required args
 if [[ -z $TOKEN ]] || [[ -z $ROOM_ID ]] || [[ -z $FROM ]]; then
+    echo "ERR: specify a valid token, room_id and from name"
     usage
     exit 1
 fi
 
-# read stdin
-INPUT=$(cat)
+# always override cmd line if unset chck stdin
+if [[ -z $MESSAGE ]]; then
+    if ! [ -t "0" ]; then
+        MESSAGE=$(cat)
+    else
+        echo "ERR: no MESSAGE sepcified"
+        exit 1
+    fi
+fi
 
 # replace newlines with XHTML <br>
-INPUT=$(echo -n "${INPUT}" | sed "s/$/\<br\>/")
+MESSAGE=$(echo -n "${INPUT}" | sed "s/$/\<br\>/")
 
 # replace bare URLs with real hyperlinks
-INPUT=$(echo -n "${INPUT}" | perl -p -e "s/(?<!href=\")((?:https?|ftp|mailto)\:\/\/[^ \n]*)/\<a href=\"\1\"\>\1\<\/a>/g")
+MESSAGE=$(echo -n "${INPUT}" | perl -p -e "s/(?<!href=\")((?:https?|ftp|mailto)\:\/\/[^ \n]*)/\<a href=\"\1\"\>\1\<\/a>/g")
 
 # urlencode with perl
-INPUT=$(echo -n "${INPUT}" | perl -p -e 's/([^A-Za-z0-9])/sprintf("%%%02X", ord($1))/seg')
+MESSAGE=$(echo -n "${INPUT}" | perl -p -e 's/([^A-Za-z0-9])/sprintf("%%%02X", ord($1))/seg')
 
 # do the curl
 curl -sS \
