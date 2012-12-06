@@ -1,27 +1,25 @@
 #!/bin/bash
 # hipmsg - send messages to hipchat room
 #
-# original by powdahound:
-# http://github.com/hipchat/hipchat-cli
-
-# exit on failure
-set -e
+# original by powdahound: http://github.com/hipchat/hipchat-cli
 
 usage() {
     cat << EOF
     Usage: $0 -t <token> -r <room id> -f <from name>
 
-    This script will read from stdin and send the contents to the given room as
-    a system message.
+    This script will send a message to the given room as
+    a system message. If -m is not specified it will read from STDIN.
+    TOKEN, ROOM_ID and FROM are required.
 
     OPTIONS:
-    -h             Show this message
-    -t <token>     API token
-    -r <room id>   Room ID
-    -f <from name> From name
-    -c <color>     Message color (yellow, red, green, purple or random - default: yellow)
-    -n             Trigger notification for people in the room
-    -o             API host (api.hipchat.com)
+    -h              Show this message
+    -m <MESSAGE>    Message string to post, overrides <stdin>
+    -t <TOKEN>      API token
+    -r <ROOM_ID>    Room ID
+    -f <FROM>       From name
+    -c <COLOR>      Message color (yellow, red, green, purple or random - default: yellow)
+    -n              Trigger notification for people in the room
+    -o              API host (api.hipchat.com)
 EOF
 }
 
