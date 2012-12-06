@@ -9,17 +9,20 @@ usage() {
 
     This script will send a message to the given room as
     a system message. If -m is not specified it will read from STDIN.
-    TOKEN, ROOM_ID and FROM are required.
 
-    OPTIONS:
-    -h              Show this message
-    -m <MESSAGE>    Message string to post, overrides <stdin>
+    REQUIRED OPTIONS:
     -t <TOKEN>      API token
     -r <ROOM_ID>    Room ID
     -f <FROM>       From name
-    -c <COLOR>      Message color (yellow, red, green, purple or random - default: yellow)
+
+    OPTIONS
+    -h              Show this message
     -n              Trigger notification for people in the room
-    -o              API host (api.hipchat.com)
+    -l              Instead of posting a message, give a list of rooms
+    -m <MESSAGE>    Message string to post, overrides <stdin>
+    -o <HOST>       API host, defaults to api.hipchat.com
+    -c <COLOR>      Message color (yellow, red, green, purple or random - default: yellow)
+
 EOF
 }
 
@@ -31,9 +34,10 @@ MESSAGE=
 NOTIFY=0
 HOST='api.hipchat.com'
 
-while getopts “ht:r:f:m:c:o:n” OPTION; do
+while getopts “hlt:r:f:m:c:o:n” OPTION; do
     case $OPTION in
         h) usage; exit 1;;
+        l) LISTROOM=yes;;
         t) TOKEN=$OPTARG;;
         r) ROOM_ID=$OPTARG;;
         f) FROM=$OPTARG;;
@@ -72,6 +76,10 @@ MESSAGE=$(echo -n "${INPUT}" | perl -p -e "s/(?<!href=\")((?:https?|ftp|mailto)\
 MESSAGE=$(echo -n "${INPUT}" | perl -p -e 's/([^A-Za-z0-9])/sprintf("%%%02X", ord($1))/seg')
 
 # do the curl
-curl -sS \
--d "auth_token=$TOKEN&room_id=$ROOM_ID&from=$FROM&color=$COLOR&message=$INPUT&notify=$NOTIFY" \
-https://$HOST/v1/rooms/message
+if [[ -z $LISTROOM ]]; then
+    curl -sS -k \
+    -d "auth_token=$TOKEN&room_id=$ROOM_ID&from=$FROM&color=$COLOR&message=$INPUT&notify=$NOTIFY" \
+    https://$HOST/v1/rooms/message
+else
+    curl -sS -k -g https://$HOST/v1/rooms/list?format=json&auth_token=$TOKEN HTTP/1.1
+fi
