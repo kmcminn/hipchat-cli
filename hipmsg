@@ -3,6 +3,20 @@
 #
 # original by powdahound: http://github.com/hipchat/hipchat-cli
 
+
+CURL=`which curl`
+PERL=`which perl`
+
+if ! [ -x "$CURL" ]; then
+    echo "ERR: curl not found"
+    exit 1
+fi
+
+if ! [ -x "$PERL" ]; then
+    echo "ERR: perl not found"
+    exit 1
+fi
+
 usage() {
     cat << EOF
     Usage: $0 -t <token> -r <room id> -f <from name>
@@ -22,6 +36,9 @@ usage() {
     -m <MESSAGE>    Message string to post, overrides <stdin>
     -o <HOST>       API host, defaults to api.hipchat.com
     -c <COLOR>      Message color (yellow, red, green, purple or random - default: yellow)
+
+    ENV VARIABLES
+    HIPCHAT_API_TOKEN   Will be used instead of -t if set
 
 EOF
 }
@@ -49,6 +66,9 @@ while getopts “hlt:r:f:m:c:o:n” OPTION; do
     esac
 done
 
+# load env token if present
+[ -n "$HIPCHAT_API_TOKEN" ] && TOKEN=$HIPCHAT_API_TOKEN
+
 # check for required args
 if [[ -z $TOKEN ]] || [[ -z $ROOM_ID ]] || [[ -z $FROM ]]; then
     echo "ERR: specify a valid token, room_id and from name"
@@ -57,7 +77,7 @@ if [[ -z $TOKEN ]] || [[ -z $ROOM_ID ]] || [[ -z $FROM ]]; then
 fi
 
 # always override cmd line if unset chck stdin
-if [[ -z $MESSAGE ]]; then
+if [[ -z $LISTROOM ]] && [[ -z $MESSAGE ]]; then
     if ! [ -t "0" ]; then
         MESSAGE=$(cat)
     else
@@ -67,19 +87,23 @@ if [[ -z $MESSAGE ]]; then
 fi
 
 # replace newlines with XHTML <br>
-MESSAGE=$(echo -n "${INPUT}" | sed "s/$/\<br\>/")
+MESSAGE=$(echo -n "${MESSAGE}" | sed "s/$/\<br\>/")
 
 # replace bare URLs with real hyperlinks
-MESSAGE=$(echo -n "${INPUT}" | perl -p -e "s/(?<!href=\")((?:https?|ftp|mailto)\:\/\/[^ \n]*)/\<a href=\"\1\"\>\1\<\/a>/g")
+MESSAGE=$(echo -n "${MESSAGE}" | perl -p -e "s/(?<!href=\")((?:https?|ftp|mailto)\:\/\/[^ \n]*)/\<a href=\"\1\"\>\1\<\/a>/g")
 
 # urlencode with perl
-MESSAGE=$(echo -n "${INPUT}" | perl -p -e 's/([^A-Za-z0-9])/sprintf("%%%02X", ord($1))/seg')
+MESSAGE=$(echo -n "${MESSAGE}" | perl -p -e 's/([^A-Za-z0-9])/sprintf("%%%02X", ord($1))/seg')
 
 # do the curl
 if [[ -z $LISTROOM ]]; then
-    curl -sS -k \
-    -d "auth_token=$TOKEN&room_id=$ROOM_ID&from=$FROM&color=$COLOR&message=$INPUT&notify=$NOTIFY" \
+    curl -ksS \
+    -d "auth_token=$TOKEN&room_id=$ROOM_ID&from=$FROM&color=$COLOR&message=$MESSAGE&notify=$NOTIFY" \
     https://$HOST/v1/rooms/message
 else
-    curl -sS -k -g https://$HOST/v1/rooms/list?format=json&auth_token=$TOKEN HTTP/1.1
+    echo 'Listing Rooms:'
+    result=`curl -skSg "https://$HOST/v1/rooms/list?format=json&auth_token=$TOKEN" 2>&1`
+    cat << EOF
+    echo $result
+EOF
 fi
