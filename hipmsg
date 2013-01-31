@@ -96,7 +96,7 @@ if [[ -z $LISTROOM ]] && [[ -z $MESSAGE ]]; then
 fi
 
 # truncate if not null
-if [ -n "$TRUNCATE" ]; then
+if [ -n "$TRUNCATE" ] && ((${#MESSAGE} > $TRUNCATE)); then
     MESSAGE=$(echo ${MESSAGE:0:$TRUNCATE})
     MESSAGE="$MESSAGE[snip]"
 fi
